@@ -7,6 +7,7 @@ from telebot import TeleBot
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
 
 from PIL import Image
 
@@ -38,26 +39,26 @@ def check_notification(bot, tracker):
     driver.get('https://imex-service.ru/booking/')
 
 # Получаем начальный скриншот страницы
-    sleep(5)
-    screenshot1 = Image.open(io.BytesIO(driver.get_screenshot_as_png()))
-
     while True:
         # Обновляем страницу
         driver.refresh()
         sleep(5)
         # Получаем новый скриншот страницы
-        screenshot2 = Image.open(io.BytesIO(driver.get_screenshot_as_png()))
-        result_screenshot = io.BytesIO(driver.get_screenshot_as_png())
 
         # Сравниваем скриншоты
         # Если скриншоты не совпадают, значит произошло изменение
         # отправляем уведомление и обновляем скриншот
-        res = screenshot1.tobytes() != screenshot2.tobytes()
+        try:
+            res = driver.find_element(By.CLASS_NAME, "my-0.text-danger").text
+            res = False
+        except Exception:
+            res = True
         for idx in ids_to_send:
             delta = ids_to_send[idx]
             if delta != 0:
                 if minute_count % delta == 0:
                     if res:
+                        result_screenshot = io.BytesIO(driver.get_screenshot_as_png())
                         bot.send_message(idx, "Что-то поменялось!")
                         bot.send_photo(idx, result_screenshot)
                     else:
@@ -65,6 +66,7 @@ def check_notification(bot, tracker):
                             idx, "Ничего не поменялось")
             else:
                 if res:
+                    result_screenshot = io.BytesIO(driver.get_screenshot_as_png())
                     bot.send_message(idx, "Что-то поменялось!")
                     bot.send_photo(idx, result_screenshot)
 

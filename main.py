@@ -101,7 +101,7 @@ def main():
         args = message.text.split()[1:]
         if len(args) != 1:
             bot.send_message(message.from_user.id,
-                             "Комманда должна быть типа '/begin n'")
+                             "Комманда должна быть типа '/begin n(м/ч)'")
         else:
             if args[0][-1].lower() == "ч" or args[0][-1].lower() == "м":
                 ids_to_send[message.from_user.id] = int(

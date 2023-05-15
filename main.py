@@ -31,6 +31,7 @@ def check_notification(bot, tracker):
 
     options = Options()
     options.add_experimental_option("detach", True)
+    options.add_argument("--window-size=1920,1080")
     options.add_argument("--headless")
     options.add_argument("--disable-dev-shm-usage")
     driver = webdriver.Chrome(options=options)

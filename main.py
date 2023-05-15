@@ -1,11 +1,16 @@
+from tracker import Tracker
 from time import time, sleep
 import os
 from dotenv import load_dotenv
 import threading
 from telebot import TeleBot
-from telebot import types
 
-from tracker import Tracker
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+from PIL import Image
+
+import io
 
 
 TIME_DELTA = 5
@@ -23,17 +28,44 @@ commands = {
 def check_notification(bot, tracker):
     global ids_to_send
     minute_count = 0
+
+    options = Options()
+    options.add_experimental_option("detach", True)
+    options.add_argument("--headless")
+    driver = webdriver.Chrome(options=options)
+    driver.get('https://imex-service.ru/booking/')
+
+# Получаем начальный скриншот страницы
+    sleep(5)
+    screenshot1 = Image.open(io.BytesIO(driver.get_screenshot_as_png()))
+
     while True:
-        res = tracker.search()
+        # Обновляем страницу
+        driver.refresh()
+        sleep(5)
+        # Получаем новый скриншот страницы
+        screenshot2 = Image.open(io.BytesIO(driver.get_screenshot_as_png()))
+        result_screenshot = io.BytesIO(driver.get_screenshot_as_png())
+
+        # Сравниваем скриншоты
+        # Если скриншоты не совпадают, значит произошло изменение
+        # отправляем уведомление и обновляем скриншот
+        res = screenshot1.tobytes() != screenshot2.tobytes()
         for idx in ids_to_send:
             delta = ids_to_send[idx]
             if delta != 0:
                 if minute_count % delta == 0:
-                    bot.send_message(
-                        idx, "Ничего не поменялось" if not res else "Что-то поменялось!")
+                    if res:
+                        bot.send_message(idx, "Что-то поменялось!")
+                        bot.send_photo(idx, result_screenshot)
+                    else:
+                        bot.send_message(
+                            idx, "Ничего не поменялось")
             else:
                 if res:
                     bot.send_message(idx, "Что-то поменялось!")
+                    bot.send_photo(idx, result_screenshot)
+
         sleep(60)
         minute_count += 1
 

@@ -32,6 +32,7 @@ def check_notification(bot, tracker):
     options = Options()
     options.add_experimental_option("detach", True)
     options.add_argument("--headless")
+    options.add_argument("--disable-dev-shm-usage")
     driver = webdriver.Chrome(options=options)
     driver.get('https://imex-service.ru/booking/')
 
